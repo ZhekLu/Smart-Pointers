@@ -24,6 +24,10 @@ public:
 		return *ptr;
 	}
 
+	T* operator->() const noexcept {
+		return ptr;
+	}
+
 	UniquePointer<T>& operator=(UniquePointer<T>&& x) noexcept {
 		if (&x == this)
 			return *this;
@@ -53,6 +57,8 @@ public:
 	}
 
 	void reset(T* newptr = nullptr) noexcept {
+		if (newptr == ptr)
+			return;
 		if (ptr)
 			delete ptr;
 		ptr = newptr;
