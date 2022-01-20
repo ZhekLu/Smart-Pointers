@@ -40,5 +40,7 @@ public:
 
 private:
     int value;
-    static inline int count_alive = 0;
+    static int count_alive;
 };
+
+int TestType::count_alive = 0;
