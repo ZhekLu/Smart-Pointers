@@ -205,7 +205,32 @@ void Test_operator_arrow() {
     std::cout << "Test -> operator : OK" << std::endl;
 }
 
+// for arrays
+void Test_delete() {
+    UniquePointer<TestType[]> s(new TestType[300]);
+    assert(TestType::AliveCount() == 300);
+    
+    s.reset();
+    assert(TestType::AliveCount() == 0);
+
+    std::cout << "Test reset & delete : OK" << std::endl;
+}
+
+void Test_branch_operator() {
+    int size = 7;
+    int* array = new int[size]{1, 2, 3, 5, 8, 13, 21};
+    UniquePointer<int[]> s(array);
+    for (int i = 0; i < size; i++) {
+        assert(s[i] == array[i]);
+        s[i] = -42 + i;
+        assert(s[i] == -42 + i);
+    }
+    
+    std::cout << "Test [] operator : OK" << std::endl;
+}
+
 int main() {
+    std::cout << "Test basic realization." << std::endl;
     Test_init();
     Test_get();
     Test_swap();
@@ -214,4 +239,8 @@ int main() {
     Test_reset();
     Test_operator_bool();
     Test_operator_arrow();
+
+    std::cout << "Test array specialization." << std::endl;
+    Test_delete();
+    Test_branch_operator();
 }
