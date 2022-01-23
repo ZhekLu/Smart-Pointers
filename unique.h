@@ -137,7 +137,7 @@ public:
         return ptr[index];
     }
 
-	// functions
+	// methods
 
 	T* get() const noexcept {
 		return ptr;
