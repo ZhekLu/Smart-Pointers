@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include "shared_counter.h"
 
 template<typename T>
 class SharedPointer {
@@ -8,32 +9,23 @@ public:
 
 	explicit SharedPointer(T* ptr = nullptr) {
 		this->ptr = ptr;
-        if  (ptr)
-            count = new size_t(1);
-        else 
-            count = nullptr;
+		_inc();
 	}
 
 	SharedPointer(SharedPointer<T>&& x) noexcept : ptr(x.ptr), count(x.count) {
 		x.ptr = nullptr;
-        x.count = nullptr;
+        x.count.drop();
 	}
 
     SharedPointer(const SharedPointer& other) noexcept {
+		_dec();
         this->ptr = other.ptr; 
         this->count = other.count;
-        if (count)
-            *count++;
+        _inc();
     }
 
 	~SharedPointer() {
-		if (count) {
-            *count--;
-            if (!*count) {
-                delete count;
-                delete ptr;
-            }
-        }
+		_dec();
 	}
 
 	// operators
@@ -50,15 +42,12 @@ public:
 		if (&other == this)
 			return *this;
 
-		if (count && !--(*count) && ptr) {
-			delete ptr;
-            delete count;
-        }
+		_dec();
 
 		this->ptr = other.ptr;
         this->count = other.count;
         other.ptr = nullptr;
-        other.count = nullptr;
+        other.count.drop();
 
 		return *this;
 	}
@@ -67,14 +56,11 @@ public:
         if (&other == this)
 			return *this;
 
-		if (count && !--(*count) && ptr) {
-			delete ptr;
-            delete count;
-        }
+		_dec();
 
 		this->ptr = other.ptr;
         this->count = other.count;
-        *count++;
+		_inc();
 
 		return *this;
     } 
@@ -97,109 +83,31 @@ public:
 	void reset(T* newptr = nullptr) noexcept {
 		if (newptr == ptr)
 			return;
-		this->~SharedPointer();
+		_dec();
 		ptr = newptr;
-        if (ptr)
-            count = new size_t(1);
-        else
-            count = nullptr;
+        _inc();
 	}
 
     size_t use_count() const noexcept {
-        if (count)
-            return *count;
-        return 0;
+        return count.get_value();
     }
 
 private:
 	T* ptr;
-    size_t* count;
+    SharedCounter count;
+
+	void _inc() {
+		if (ptr)
+			count.inc();
+	}
+
+	void _dec() {
+		if (!ptr)
+			return;
+		if (count.dec()) {
+			delete ptr;
+			ptr = nullptr;
+		}
+	}
 };
 
-
-// // Special for arrays
-// template <typename T> 
-// class SharedPointer<T[]> {
-// public:
-// 	// ctors
-
-// 	explicit UniquePointer(T* ptr = nullptr) {
-// 		this->ptr = ptr;
-// 	}
-
-// 	// for std::move
-// 	UniquePointer(UniquePointer<T>&& x) noexcept : ptr(x.ptr) {
-// 		x.ptr = nullptr;
-// 	}
-
-// 	~UniquePointer() {
-// 		if (ptr)
-// 			delete[] ptr;
-// 	}
-
-// 	// operators
-
-// 	T& operator*() const noexcept {
-// 		return *ptr;
-// 	}
-
-// 	T* operator->() const noexcept {
-// 		return ptr;
-// 	}
-
-// 	UniquePointer<T>& operator=(UniquePointer<T>&& other) noexcept {
-// 		if (&other == this)
-// 			return *this;
-		
-// 		if (ptr)
-// 			delete[] ptr;
-
-// 		this->ptr = other.ptr;
-// 		other.ptr = nullptr;
-
-// 		return *this;
-// 	}
-
-// 	explicit operator bool() const {
-// 		return ptr;
-// 	}
-
-// 	T& operator[](size_t index) {
-//         return ptr[index];
-//     }
-
-//     const T& operator[](size_t index) const {
-//         return ptr[index];
-//     }
-
-// 	// functions
-
-// 	T* get() const noexcept {
-// 		return ptr;
-// 	}
-
-// 	void swap(UniquePointer<T>& other) noexcept {
-// 		std::swap(this->ptr, other.ptr);
-// 	}
-
-// 	void reset(T* newptr = nullptr) noexcept {
-// 		if (newptr == ptr)
-// 			return;
-// 		if (ptr)
-// 			delete[] ptr;
-// 		ptr = newptr;
-// 	}
-
-// 	T* release() noexcept {
-// 		auto mem = ptr;
-// 		this->ptr = nullptr;
-// 		return mem;
-// 	}
-
-// private:
-// 	T* ptr;
-
-// 	// copy and assignment not allowed
-// 	UniquePointer(const T&) = delete;
-// 	void operator=(UniquePointer<T>&) = delete;
-// };
