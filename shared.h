@@ -18,10 +18,9 @@ public:
 	}
 
     SharedPointer(const SharedPointer& other) noexcept {
-		_dec();
         this->ptr = other.ptr; 
         this->count = other.count;
-        _inc();
+		_inc();
     }
 
 	~SharedPointer() {

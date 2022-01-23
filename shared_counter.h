@@ -9,15 +9,15 @@ public:
 
     void inc() noexcept {
         if (ptr)
-            *ptr++;
+            (*ptr)++;
         else
             ptr = new size_t(1);
     }
 
     // return true if object must be removed
     bool dec() noexcept {
-        *ptr--;
-        if (!*ptr) {
+        (*ptr)--;
+        if (!(*ptr)) {
             delete ptr;
             ptr = nullptr;
             return true;
@@ -41,8 +41,9 @@ public:
     }
 
     ~SharedCounter() {
-        if (ptr)
+        if (ptr && !(*ptr))
             delete ptr;
+        
     }
 private:
     size_t* ptr;
